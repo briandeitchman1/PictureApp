@@ -41,9 +41,9 @@ function App() {
     console.log(lastOp)
     if((lastOp >= '0'&& lastOp<= '9') || lastOp == '(' || lastOp == ')')
     {
-      console.log('yo')
+      console.log(newOp)
       setOperations( prevOperations =>{
-        return [...prevOperations,e.target.innerText]
+        return [...prevOperations,newOp]
       })
       return
     }
@@ -56,7 +56,6 @@ function App() {
   const joinNumbers = (numberArray)=>{
     let number="";
     operations.forEach(operation=>{
-      console.log(operation + "hi")
       if(!isNumber(operation)){
        if(number!=""){
          numberArray.push(number);
@@ -80,7 +79,7 @@ function App() {
     return false;
   }
   const isOperation = (op)=>{
-    if(op === '+'||op === '-'|| op ==='*'|| op === '/'){
+    if(op === '+'||op === '-'|| op ==='*'|| op === '/'|| op=== '('|| op ===')'){
       return true;
     }
     return false;
@@ -199,10 +198,26 @@ function App() {
     setOperations([result.toString()])
   }
 
+  const  keyPressHandler = (event)=>{
+    console.log(event.key.toString())
+    let x = event.key.toString();
+    if(isNumber(x)||isOperation(x)){
+      setOperations( prevOperations =>{
+        return [...prevOperations,x]
+      })
+    }
+    if(x === "Backspace"){
+      backspace();
+    }
+    if(x === "Enter"){
+      doMath();
+    }
+  }
+
   return (
-    <div className='container'>
+    <div className='container' id="container" tabIndex="0"  onKeyDown={keyPressHandler}>
       <Header />
-      <Screen operations={operations}/>
+      <Screen operations={operations} />
       <div className="row">
         <div className="col">
         <Button  text='1' onClick={addNumber}/>
@@ -235,10 +250,6 @@ function App() {
       <Button  text='+' onClick={addOperator} />
       <Button  text='-' onClick={addOperator} />
       <Button  text='/' onClick={addOperator} />
-      
-      
-      
-      
       
       <Button  text='BackSpace' color="blue" onClick={backspace}/>
 
