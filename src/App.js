@@ -22,13 +22,24 @@ function App() {
       return [...prevOperations,e.target.innerText]
     })
   }
+  const reset = ()=>{
+    setOperations([]);
+  }
+  const backspace = ()=>{
+    if(operations.length == 0){
+      return;
+    }
+    setOperations(prevOperations =>{
+      return  [prevOperations.slice(0,prevOperations.length-1)];
+    })
+  }
   // will only add an operator(+,-,*,/) if the last operation was a number
   // If the last operation was a operator(+,-,*,/) it will change to the new 1
   const addOperator = (e)=>{
     const newOp  = e.target.innerText;
     const lastOp = operations[operations.length-1];
     console.log(lastOp)
-    if(lastOp >= '0'&& lastOp<= '9')
+    if((lastOp >= '0'&& lastOp<= '9') || lastOp == '(' || lastOp == ')')
     {
       console.log('yo')
       setOperations( prevOperations =>{
@@ -47,7 +58,9 @@ function App() {
     operations.forEach(operation=>{
       console.log(operation + "hi")
       if(!isNumber(operation)){
-        numberArray.push(number);
+       if(number!=""){
+         numberArray.push(number);
+        }
         numberArray.push(operation);
         number ="";
       }
@@ -55,7 +68,9 @@ function App() {
         number+=operation;
       }
     })
-    numberArray.push(number);
+    if(number!=""){
+      numberArray.push(number);
+    }
     return numberArray
   }
   const isNumber = (num)=>{
@@ -72,6 +87,8 @@ function App() {
   }
   const doOperation = (num1,op,num2)=>{
     let result;
+    num1 = parseInt(num1);
+    num2 = parseInt(num2);
     switch(op){
       case "+": result = num1 + num2;
                 break; 
@@ -84,49 +101,147 @@ function App() {
     }
     return result;
   }
-  const doMath = ()=>{
-    //console.log(operations)
+  
+  // checks for correct number of parentheses
+  const isBalanced = (nums)=>{
+   const stack = [];
 
+   for(let i = 0; i < nums.length; i++){
+    let c = nums[i];
+    if(c == '('){
+      stack.push('(')
+    }
+    if(c == ')'){
+      if(stack.length == 0){
+        return false;
+      }
+      stack.pop();
+    }
+   }
+   return stack.length == 0;
+  }
+
+  const invalidFormat = () =>{
+    console.log("invalid format");
+    setOperations([]);
+  }
+  const toPostFix = (nums,q)=>{
+    const stack = [];
+
+    nums.forEach(num =>{
+      if(isNumber(num)){
+        q.push(num);
+      }else{
+        if(num == '('){
+          stack.push(num);
+        }
+        if(num == ')'){
+
+          let op = stack.pop();
+          while(op!='('){
+            q.push(op);
+            op = stack.pop();
+          }
+        }
+        if(num == '+' || num == '-'){
+         let top = stack.length-1;
+         while(stack.length){
+          console.log("stack")
+         if( stack[top] == '*' || stack[top] == '/'){
+          let op = stack.pop();
+          q.push(op);
+          top--;
+         }
+         else{
+          break;
+         }
+        }
+        stack.push(num);
+        }
+        if(num == '*'|| num == '/'){
+          stack.push(num);
+        }
+      }
+    })
+    while(stack.length>0){
+      q.push(stack.pop());
+    }
+    console.log(q);
+  } 
+
+  const solve = (q)=>{
+    const stack = [];
+    q.forEach(x=>{
+      if(isNumber(x)){
+        stack.push(x);
+      }
+      else{
+        let num2 = stack.pop();
+        let num1 = stack.pop();
+        stack.push(doOperation(num1,x,num2));
+      }
+
+    })
+    return stack.pop();
+  }
+
+  const doMath = ()=>{
     const numberArray =[]
     joinNumbers(numberArray);
     console.log(numberArray);
-    let result = 0;
-    let i = 0;
-    let op ="";
-    while( i < numberArray.length){
-      let num1 = parseInt(numberArray[i]);
-      i++;
-      op = numberArray[i]
-      i++;
-      let num2 = parseInt(numberArray[i])
-      i++;
-      result+= doOperation(num1,op,num2);
-
+    if(!isBalanced(numberArray)){
+      invalidFormat();
     }
-   
-    
-    setOperations(result?[result]:[])
+    const q = []
+    toPostFix(numberArray,q);
+    console.log(q);
+    let result =  solve(q);
+    setOperations([result.toString()])
   }
 
   return (
-    <div>
+    <div className='container'>
       <Header />
       <Screen operations={operations}/>
-      <Button  text='1' onClick={addNumber}/>
-      <Button  text='2' onClick={addNumber}/>
-      <Button  text='3' onClick={addNumber}/>
-      <Button  text='4' onClick={addNumber}/>
+      <div className="row">
+        <div className="col">
+        <Button  text='1' onClick={addNumber}/>
+        <Button  text='2' onClick={addNumber}/>
+        <Button  text='3' onClick={addNumber}/>
+        <Button  text=')' onClick={addNumber}/>
+        </div>
+      
+      </div>
+      <div className="row">
+        <div className="col">
+        <Button  text='4' onClick={addNumber}/>
       <Button  text='5' onClick={addNumber}/>
       <Button  text='6' onClick={addNumber}/>
-      <Button  text='7' onClick={addNumber}/>
+      <Button  text='(' onClick={addNumber}/>
+      <Button  text='=' onClick={doMath} />
+        </div>
+      </div>
+      <div className="row">
+        <div className="col">
+        <Button  text='7' onClick={addNumber}/>
       <Button  text='8' onClick={addNumber}/>
       <Button  text='9' onClick={addNumber}/>
+      <Button  text='*' onClick={addOperator} />
+      <Button  text='Reset' color="red" onClick={reset}/>
+        </div>
+      </div>
+      
       <Button  text='0' onClick={addNumber}/>
       <Button  text='+' onClick={addOperator} />
       <Button  text='-' onClick={addOperator} />
       <Button  text='/' onClick={addOperator} />
-      <Button  text='*' onClick={addOperator} />
-      <Button  text='=' onClick={doMath} />
+      
+      
+      
+      
+      
+      <Button  text='BackSpace' color="blue" onClick={backspace}/>
+
 
       
 
