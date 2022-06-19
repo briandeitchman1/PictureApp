@@ -53,6 +53,50 @@ function App() {
     })
 
   }
+  const parenHelper = (numArray,op,prev,num)=>{
+    //case where we need to add * before (
+    if(isNumber(prev) && op=='('){
+      numArray.push(num);
+      numArray.push('*');
+      numArray.push(op);
+      return '';
+    }
+    //case where we need to add * after )
+    if(isNumber(op)&& prev==')'){
+      numArray.push('*');
+      return num+=op;
+    }
+    //case where we need to push num before ( or )
+    if(num!=''){
+      numArray.push(num);
+     
+    }
+    // case where num is '' so we dont push num
+    numArray.push(op);
+    return '';
+  }
+  // makes 1-2 into 1 + -2. makes negative numbers work.
+  const negativeHelper = (numArray,prev,op,num)=>{
+  // It wont add a plus if the prev is ( so 2(-2) wont become 2(+-2)
+    if(!isOperation(prev)&&prev!=''&&prev!='('){
+      numArray.push(num);
+      numArray.push('+');
+      num = ''
+    }
+    return num+=op
+  }
+  const operatorHelper = (numArray,op,num)=>{
+    if(!isNumber(op)&&op!='.'){
+      if(num!=''){
+        numArray.push(num);
+       }
+       numArray.push(op);
+       return '';
+     }
+     else{
+       return num+=op;
+     }
+  }
   // converts normal math notation into something that can
   // then be converted into postfix notation
   // for example 5(6) to 5*(6) and (2)3 to (2)*3
@@ -61,39 +105,21 @@ function App() {
     let number='';
     let prev ='';
     operations.forEach(operation=>{
-      if(isNumber(prev) && operation=='(' ){
-        numberArray.push(number);
-        numberArray.push('*');
-        numberArray.push(operation)
-        number=''
+      //deals with parentheses so they work with multiplication
+      if(operation == '('|| operation == ')'|| prev == ')'){
+        number = parenHelper(numberArray,operation,prev,number);
       }else
-      if(isNumber(operation) && prev==')'){
-        numberArray.push('*');
-        number+=operation
-      }
-      else
       // lets the number be negative
       if(operation == '-' ){
-        if(!isOperation(prev)&& prev!=''&&prev!='('){
-          console.log("yo")
-          numberArray.push(number);
-          numberArray.push('+')
-          number = ''
-        }
-        number+= operation;
-      }else
-      if(!isNumber(operation)&&operation!='.'){
-       if(number!=''){
-         numberArray.push(number);
-        }
-        numberArray.push(operation);
-        number ='';
+        number = negativeHelper(numberArray,prev,operation,number);
       }
+      // deals with the rest
       else{
-        number+=operation;
+        number = operatorHelper(numberArray,operation,number);
       }
       prev = operation;
     })
+    // push the last number on the the array
     if(number!=''){
       numberArray.push(number);
     }
@@ -114,8 +140,7 @@ function App() {
     return false;
   }
   const doOperation = (num1,op,num2)=>{
-    let result;
-    
+    let result; 
     num1 = parseFloat(num1);
     num2 = parseFloat(num2);
     switch(op){
