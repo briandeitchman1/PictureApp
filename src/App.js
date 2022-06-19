@@ -29,9 +29,10 @@ function App() {
     if(operations.length == 0){
       return;
     }
-    setOperations(prevOperations =>{
-      return  [prevOperations.slice(0,prevOperations.length-1)];
-    })
+    
+    let result =[...operations];
+    result= result.slice(0, result.length-1);
+    setOperations([result])
   }
   // will only add an operator(+,-,*,/) if the last operation was a number
   // If the last operation was a operator(+,-,*,/) it will change to the new 1
@@ -39,7 +40,7 @@ function App() {
     const newOp  = e.target.innerText;
     const lastOp = operations[operations.length-1];
     console.log(lastOp)
-    if((lastOp >= '0'&& lastOp<= '9') || lastOp == '(' || lastOp == ')')
+    if((lastOp >= '0'&& lastOp<= '9') || lastOp == '(' || lastOp == ')'||lastOp == '-')
     {
       console.log(newOp)
       setOperations( prevOperations =>{
@@ -52,42 +53,71 @@ function App() {
     })
 
   }
-  
+  // converts normal math notation into something that can
+  // then be converted into postfix notation
+  // for example 5(6) to 5*(6) and (2)3 to (2)*3
+  // and 1-2 -> 1 + -2 
   const joinNumbers = (numberArray)=>{
-    let number="";
+    let number='';
+    let prev ='';
     operations.forEach(operation=>{
-      if(!isNumber(operation)){
-       if(number!=""){
+      if(isNumber(prev) && operation=='(' ){
+        numberArray.push(number);
+        numberArray.push('*');
+        numberArray.push(operation)
+        number=''
+      }else
+      if(isNumber(operation) && prev==')'){
+        numberArray.push('*');
+        number+=operation
+      }
+      else
+      // lets the number be negative
+      if(operation == '-' ){
+        if(!isOperation(prev)&& prev!=''&&prev!='('){
+          console.log("yo")
+          numberArray.push(number);
+          numberArray.push('+')
+          number = ''
+        }
+        number+= operation;
+      }else
+      if(!isNumber(operation)&&operation!='.'){
+       if(number!=''){
          numberArray.push(number);
         }
         numberArray.push(operation);
-        number ="";
+        number ='';
       }
       else{
         number+=operation;
       }
+      prev = operation;
     })
-    if(number!=""){
+    if(number!=''){
       numberArray.push(number);
     }
     return numberArray
   }
+  // returns true if the array is a number
+  // checks if a number is negative too
   const isNumber = (num)=>{
-    if (num>="0"&&num<="9") {
+    if (num>="0"&&num<="9" || num[0]=='-') {
       return true;
     }
     return false;
   }
   const isOperation = (op)=>{
-    if(op === '+'||op === '-'|| op ==='*'|| op === '/'|| op=== '('|| op ===')'){
+    if(op === '+'||op === '-'|| op ==='*'|| op === '/'){
       return true;
     }
     return false;
   }
   const doOperation = (num1,op,num2)=>{
     let result;
-    num1 = parseInt(num1);
-    num2 = parseInt(num2);
+    
+    num1 = parseFloat(num1);
+    num2 = parseFloat(num2);
     switch(op){
       case "+": result = num1 + num2;
                 break; 
@@ -124,6 +154,8 @@ function App() {
     console.log("invalid format");
     setOperations([]);
   }
+  // uses the shunting yard algorithm to convert from 
+  // infix notation to postfix or reverse polish notation
   const toPostFix = (nums,q)=>{
     const stack = [];
 
@@ -201,7 +233,7 @@ function App() {
   const  keyPressHandler = (event)=>{
     console.log(event.key.toString())
     let x = event.key.toString();
-    if(isNumber(x)||isOperation(x)){
+    if(isNumber(x)||isOperation(x)|| x =='('||x ==')'){
       setOperations( prevOperations =>{
         return [...prevOperations,x]
       })
@@ -224,6 +256,7 @@ function App() {
         <Button  text='2' onClick={addNumber}/>
         <Button  text='3' onClick={addNumber}/>
         <Button  text=')' onClick={addNumber}/>
+        <Button  text='.' onClick={addNumber}/>
         </div>
       
       </div>
@@ -248,7 +281,7 @@ function App() {
       
       <Button  text='0' onClick={addNumber}/>
       <Button  text='+' onClick={addOperator} />
-      <Button  text='-' onClick={addOperator} />
+      <Button  text='-' onClick={addNumber} />
       <Button  text='/' onClick={addOperator} />
       
       <Button  text='BackSpace' color="blue" onClick={backspace}/>
