@@ -5,16 +5,22 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import Button from './components/Button';
 import Screen from './components/Screen';
-import { useState } from "react"
+import History from './components/History';
+import {v4} from 'uuid';
+import { useState,useEffect } from "react"
 
 
-
+const LOCAL_STORAGE_KEY = 'calc.answers'
 
 
 
 function App() {
 
   const [operations, setOperations] = useState([""])
+  const [answers,setAnswers] = useState([""])
+
+
+
   // adds a number as a string to the operations
   const addNumber = (e)=>{
     console.log(e.target.innerText)
@@ -97,10 +103,10 @@ function App() {
        return num+=op;
      }
   }
-  // converts normal math notation into something that can
-  // then be converted into postfix notation
-  // for example 5(6) to 5*(6) and (2)3 to (2)*3
-  // and 1-2 -> 1 + -2 
+  // converts normal math notation into something that can then be converted 
+  // into postfix notation and combines the array of digits into numbers.
+  // for example [5,(,6,),] to [5,*,(,6,)] and [(,2,),3] to [(,2,),*,3,]
+  // and [1,-,2] -> [1,+,-2]. [-,2,(,2,)] ->[-2,*,(,2,)] 
   const joinNumbers = (numberArray)=>{
     let number='';
     let prev ='';
@@ -139,6 +145,7 @@ function App() {
     }
     return false;
   }
+  //actually does the adding subtracting ect
   const doOperation = (num1,op,num2)=>{
     let result; 
     num1 = parseFloat(num1);
@@ -159,7 +166,6 @@ function App() {
   // checks for correct number of parentheses
   const isBalanced = (nums)=>{
    const stack = [];
-
    for(let i = 0; i < nums.length; i++){
     let c = nums[i];
     if(c == '('){
@@ -185,12 +191,16 @@ function App() {
     const stack = [];
 
     nums.forEach(num =>{
+      // always push numbers onto the q
       if(isNumber(num)){
         q.push(num);
       }else{
+        //always push ( onto the stack
         if(num == '('){
           stack.push(num);
         }
+        // when we get ) push everything from stack onto the q
+        // until we hit the closing (
         if(num == ')'){
 
           let op = stack.pop();
@@ -199,6 +209,8 @@ function App() {
             op = stack.pop();
           }
         }
+        // if we have a * or / on the stack and run into + or -
+        // we need to pop off all * and / then we can push + or -
         if(num == '+' || num == '-'){
          let top = stack.length-1;
          while(stack.length){
@@ -212,6 +224,7 @@ function App() {
           break;
          }
         }
+        // the only other symbols are * and / we just push them
         stack.push(num);
         }
         if(num == '*'|| num == '/'){
@@ -219,12 +232,13 @@ function App() {
         }
       }
     })
+    // push anything left on the stack to the q
     while(stack.length>0){
       q.push(stack.pop());
     }
     console.log(q);
   } 
-
+// this solves the postfix notation array created from toPostFix function
   const solve = (q)=>{
     const stack = [];
     q.forEach(x=>{
@@ -240,7 +254,8 @@ function App() {
     })
     return stack.pop();
   }
-
+// calls all the functions needed to take the array of digits and symbols
+// and convert it into the solution and prints the solution to the screen
   const doMath = ()=>{
     const numberArray =[]
     joinNumbers(numberArray);
@@ -253,8 +268,10 @@ function App() {
     console.log(q);
     let result =  solve(q);
     setOperations([result.toString()])
+    setAnswers([...answers, {id:v4(), answer:result.toString()}])
+   
   }
-
+//lets the user type instead of clicking buttons
   const  keyPressHandler = (event)=>{
     console.log(event.key.toString())
     let x = event.key.toString();
@@ -271,6 +288,14 @@ function App() {
     }
   }
 
+  const insertOldAnswer = (answer)=>{
+    console.log(answer.target.innerText);
+    setOperations([answer.target.innerText]);
+  }
+  const clearHistory = ()=>{
+    setAnswers([])
+  }
+
   return (
     <div className='container' id="container" tabIndex="0"  onKeyDown={keyPressHandler}>
       <Header />
@@ -283,7 +308,6 @@ function App() {
         <Button  text=')' onClick={addNumber}/>
         <Button  text='.' onClick={addNumber}/>
         </div>
-      
       </div>
       <div className="row">
         <div className="col">
@@ -308,12 +332,11 @@ function App() {
       <Button  text='+' onClick={addOperator} />
       <Button  text='-' onClick={addNumber} />
       <Button  text='/' onClick={addOperator} />
-      
       <Button  text='BackSpace' color="blue" onClick={backspace}/>
-
-
-      
-
+      <h3>Answer History</h3>
+      <p>Click to go back to that answer</p>
+      <History answers={answers} onClick={insertOldAnswer}/>
+      <Button text='Clear History' color="red"onClick={clearHistory}/>
       <Footer />
     </div>
   );

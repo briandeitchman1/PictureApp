@@ -1,13 +1,15 @@
-import React from 'react'
+import React, {Link}from 'react'
 
 const Header = () => {
     return (
-        <div>
-            <h1>header</h1>
+        <div className="row">
+            <div className="col">
+            <h1>React Calculator</h1>
+            </div>
+            
             <hr />
         </div>
-
-    )
+    )   
 }
 
 export default Header
